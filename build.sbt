@@ -29,3 +29,5 @@ updateOptions := updateOptions.value.withGigahorse(false)
 // Add the Cinnamon Agent for run and test
 run / cinnamon := true
 test / cinnamon := true
+
+scalacOptions += "-language:postfixOps"

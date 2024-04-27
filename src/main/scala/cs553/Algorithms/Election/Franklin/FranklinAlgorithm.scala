@@ -1,12 +1,12 @@
-package cs553.Algorithms.Election
+package cs553.Algorithms.Election.Franklin
 
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{ ActorContext, Behaviors}
 import cs553.Nodes
 
 import scala.collection.mutable
 
-object Franklin {
+object FranklinAlgorithm {
 
   sealed trait Direction
   case object Left extends Direction
@@ -14,15 +14,15 @@ object Franklin {
 
   def apply(id: Int): Behavior[Nodes.Command] =
     Behaviors.setup { context =>
-      new Franklin(context, id).setup(null, null)
+      new FranklinAlgorithm(context, id).setup(null, null)
   }
 }
 
-class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
+class FranklinAlgorithm(context: ActorContext[Nodes.Command], id: Int)  {
   context.log.info(s"NodeActorFranklin $id created")
 
+  import FranklinAlgorithm._
   import Nodes._
-  import Franklin._
 
   private def checkAndActivate(leftN: ActorRef[Nodes.Command], rightN: ActorRef[Nodes.Command]): Behavior[Command] =
     if (leftN == null || rightN == null) {
@@ -30,8 +30,8 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
     }
     else {
       context.log.info(s"Node $id Neighbors Set")
-      leftN ! Token(id, 0, Left)
-      rightN ! Token(id, 0, Right)
+      leftN ! FranklinToken(id, 0, Left)
+      rightN ! FranklinToken(id, 0, Right)
       active(leftN, rightN,mutable.Set[(Int, Int)](), mutable.Set[(Int, Int)](), currentRound = 0)
     }
 
@@ -55,8 +55,8 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
                      ): Behavior[Command] =
     Behaviors.receiveMessage {
 
-      case Token(senderId, roundNumber, direction) =>
-        context.log.info(s"Node $id received Token from $direction with ID $senderId with round $roundNumber")
+      case FranklinToken(senderId, roundNumber, direction) =>
+        context.log.info(s"Active Node $id: Received Token from $direction with ID $senderId with round $roundNumber")
         direction match {
           case Left => leftTokens += (roundNumber -> senderId)
           case Right => rightTokens += (roundNumber -> senderId)
@@ -65,15 +65,15 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
         if (leftTokens.exists(_._1 == currentRound) && rightTokens.exists(_._1 == currentRound)) {
           val leftSenderId = leftTokens.find(_._1 == currentRound).map(_._2)
           val rightSenderId = rightTokens.find(_._1 == currentRound).map(_._2)
-          leftSenderId.zip(rightSenderId).headOption.map { case (leftId, rightId) =>
+          leftSenderId.zip(rightSenderId).map { case (leftId, rightId) =>
             context.log.info(s"Round $currentRound --> Node $id evaluating between $leftId and $rightId at round $currentRound")
             val maxId = math.max(leftId, rightId)
             if (id > maxId) {
               leftTokens.filterInPlace(_._1 > currentRound)
               rightTokens.filterInPlace(_._1 > currentRound)
               val nextRound = currentRound + 1
-              leftNode ! Token(id, nextRound, Left)
-              rightNode ! Token(id, nextRound, Right)
+              leftNode ! FranklinToken(id, nextRound, Left)
+              rightNode ! FranklinToken(id, nextRound, Right)
               context.log.info(s"Round $currentRound --> Node $id proceeds to $nextRound and sends token to $leftNode and $rightNode")
               active(leftNode, rightNode, leftTokens, rightTokens, nextRound) // Ensuring this returns Behavior[Nodes.Command]
             } else if (id < maxId) {
@@ -87,7 +87,6 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
             }
           }.getOrElse(Behaviors.same[Nodes.Command])
         } else {
-          context.log.info(s"Node $id Left Tokes: $leftTokens and Right Tokens: $rightTokens")
           Behaviors.same[Nodes.Command]
         }
     }
@@ -97,14 +96,15 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
                       leftTokens: mutable.Set[(Int, Int)],
                       rightTokens:mutable.Set[(Int, Int)]): Behavior[Command] = {
 
+    // Clear the remaining unprocessed tokens
     def forwardTokens(): Unit = {
       leftTokens.foreach { case (round, senderId) =>
-        context.log.info(s"Node $id Forwarding Message with ID: $senderId to target ${rightNode.path}")
-        leftNode ! Token(senderId, round, Left)
+        context.log.info(s"Passive Node $id: Forwarding Message with ID: $senderId to target ${rightNode.path}")
+        leftNode ! FranklinToken(senderId, round, Left)
       }
       rightTokens.foreach { case (round, senderId) =>
-        context.log.info(s"Node $id Forwarding Message with ID: $senderId to target ${leftNode.path}")
-        rightNode ! Token(senderId, round, Right)
+        context.log.info(s"Passive Node $id: Forwarding Message with ID: $senderId to target ${leftNode.path}")
+        rightNode ! FranklinToken(senderId, round, Right)
       }
       leftTokens.clear()
       rightTokens.clear()
@@ -113,11 +113,11 @@ class Franklin(context: ActorContext[Nodes.Command], id: Int)  {
     forwardTokens()
 
     Behaviors.receiveMessage {
-      case Token(senderId, roundNumber, direction) =>
+      case FranklinToken(senderId, roundNumber, direction) =>
 
         val target = if (direction == Left) leftNode else rightNode
-        context.log.info(s"Node $id Relaying Message with ID: $senderId to target ${target.path}")
-        target ! Token(senderId, roundNumber, direction)
+        context.log.info(s"Passive Node $id: Relaying Message with ID: $senderId to target ${target.path}")
+        target ! FranklinToken(senderId, roundNumber, direction)
         forwardTokens()
         Behaviors.same
     }
