@@ -2,12 +2,12 @@ package cs553.Algorithms.Election.ChangRoberts
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
-import cs553.Nodes.{Command, SetSuccessor}
+import cs553.Nodes.{Command, SetSuccessor, StartAlgorithm}
 import cs553.Utils.FileParser
 
-object Driver {
+object ChangRobertsDriver {
   def main(args: Array[String]): Unit = {
-    val nodeMappings = FileParser.parseDotFile("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/DirectedRings/random50DirectedRing.dot")
+    val nodeMappings = FileParser.parseDotFile("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/DirectedRings/50.dot")
     println(s"$nodeMappings")
 
     runCRAlgorithm(nodeMappings)
@@ -15,10 +15,10 @@ object Driver {
 
   private def runCRAlgorithm(nodeMappings:  Map[Int, List[Int]]): Unit = {
     val systemName = "CRSystem"
-    ActorSystem(createRing(nodeMappings), systemName)
+    ActorSystem(createActors(nodeMappings), systemName)
   }
 
-  def createRing(nodeMappings: Map[Int, List[Int]]): Behavior[Command] = {
+  def createActors(nodeMappings: Map[Int, List[Int]]): Behavior[Command] = {
     Behaviors.setup { context =>
       // Create CRAlgorithm actors without setting their neighbors
       val nodeActors = nodeMappings.keys.map { nodeId =>
@@ -32,6 +32,7 @@ object Driver {
         val successor = nodeActors.getOrElse(successorId.head, context.system.ignoreRef)
         node ! SetSuccessor(successor)
       }
+      nodeActors.values.foreach(_ ! StartAlgorithm)
       Behaviors.same
     }
   }

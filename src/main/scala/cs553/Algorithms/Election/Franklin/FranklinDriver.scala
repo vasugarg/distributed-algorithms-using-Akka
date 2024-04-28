@@ -5,9 +5,9 @@ import akka.actor.typed.{ActorSystem, Behavior}
 import cs553.Nodes.{Command, SetLeftNeighbor, SetRightNeighbor}
 import cs553.Utils.FileParser
 
-object Driver {
+object FranklinDriver {
   def main(args: Array[String]): Unit = {
-    val nodeMappings = FileParser.parseDotFileWithOrientation("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/random50UndirectedRing.dot")
+    val nodeMappings = FileParser.parseDotFileWithOrientation("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/UndirectedRings/50.dot")
     println(s"$nodeMappings")
 
     runFranklinAlgorithm(nodeMappings)
@@ -15,10 +15,10 @@ object Driver {
 
   def runFranklinAlgorithm(nodeMappings:  Map[Int, Map[String, Option[Int]]]): Unit = {
     val systemName = "FranklinSystem"
-    val system = ActorSystem(createRing(nodeMappings), systemName)
+    ActorSystem(createActors(nodeMappings), systemName)
   }
 
-  def createRing(nodeMappings: Map[Int, Map[String, Option[Int]]]): Behavior[Command] = {
+  def createActors(nodeMappings: Map[Int, Map[String, Option[Int]]]): Behavior[Command] = {
     Behaviors.setup { context =>
       // Create FranklinAlgorithm actors without setting their neighbors
       val nodeActors = nodeMappings.keys.map { nodeId =>

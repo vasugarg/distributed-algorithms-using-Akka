@@ -1,0 +1,9 @@
+digraph "Net Graph with 5 nodes" {
+edge ["class"="link-class"]
+"203" -> "251" ["weight"="5.9"]
+"251" -> "307" ["weight"="7.2"]
+"307" -> "805" ["weight"="6.3"]
+"805" -> "698" ["weight"="4.5"]
+"698" -> "275" ["weight"="4.7"]
+"275" -> "203" ["weight"="8.4"]
+}

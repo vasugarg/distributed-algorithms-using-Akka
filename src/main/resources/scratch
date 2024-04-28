@@ -1,0 +1,45 @@
+HashMap(
+0 -> (Some(4),Some(5)),
+5 -> (Some(0),Some(1)),
+1 -> (Some(3),Some(5)),
+2 -> (Some(3),Some(4)),
+3 -> (Some(1),Some(2)),
+4 -> (Some(2),Some(0)))
+
+
+HashMap(
+0 -> (Some(4),Some(5)),
+5 -> (Some(0),Some(1)),
+1 -> (Some(5),Some(3)),
+2 -> (Some(3),Some(4)),
+3 -> (Some(1),Some(2)),
+4 -> (Some(2),Some(0)))
+
+
+HashMap(
+0 -> (Some(4),Some(5)),
+5 -> (Some(0),Some(1)),
+1 -> (Some(3),Some(5)),
+2 -> (Some(3),Some(4)),
+3 -> (Some(1),Some(2)),
+4 -> (Some(2),Some(0)))
+
+
+HashMap(
+0 -> Map(Left -> Some(5), Right -> Some(4)),
+5 -> Map(Left -> Some(1), Right -> Some(0)),
+1 -> Map(Left -> Some(5), Right -> Some(3)),
+2 -> Map(Left -> Some(4), Right -> Some(3)),
+3 -> Map(Left -> Some(2), Right -> Some(1)),
+4 -> Map(Left -> Some(0), Right -> Some(2)))
+
+
+
+HashMap(
+0 -> Map(Left -> Some(4), Right -> Some(5)),
+5 -> Map(Left -> Some(0), Right -> Some(1)),
+1 -> Map(Left -> Some(5), Right -> Some(3)),
+2 -> Map(Left -> Some(3), Right -> Some(4)),
+3 -> Map(Left -> Some(1), Right -> Some(2)),
+4 -> Map(Left -> Some(2), Right -> Some(0)))
+

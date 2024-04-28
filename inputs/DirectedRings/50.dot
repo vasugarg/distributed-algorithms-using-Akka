@@ -1,3 +1,5 @@
+digraph "Net Graph with 50 nodes. Highest ID: 985" {
+edge ["class"="link-class"]
 "203" -> "251" ["weight"="5.9"]
 "251" -> "307" ["weight"="7.2"]
 "307" -> "805" ["weight"="6.3"]

@@ -1,3 +1,22 @@
+/*
+ * Tree Election Algorithm Implementation
+ * =======================================
+ *
+ * This Scala file contains the implementation of the Tree Election Algorithm using the Akka actor model.
+ * The algorithm operates in a distributed system where each node may become a leader based on the exchange of tokens.
+ * The actors communicate with their left and right neighbors, sending and receiving tokens to determine the leader.
+ *
+ * - `TreeAlgorithm` object: Encapsulates the behavior definitions for the nodes participating in the election.
+ * - `TreeAlgorithm` class: Represents the behavior of a single node participating in the election process.
+ *
+ * Note: This implementation leverages mutable state for tokens collection, which is encapsulated within actor state to
+ * maintain the principles of the actor model.
+ *
+ * Author: Vasu Garg
+ * Version: 1.0
+ * Last Updated: April 28, 2024
+ */
+
 package cs553.Algorithms.Election.TreeElection
 
 import akka.actor.typed.{ActorRef, Behavior}
@@ -5,8 +24,6 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import cs553.Nodes
 
 import scala.collection.mutable
-import scala.concurrent.duration._
-
 object TreeAlgorithm {
 
   def apply(
@@ -14,36 +31,40 @@ object TreeAlgorithm {
              isInitiator: Boolean
            ): Behavior[Nodes.Command] =
     Behaviors.setup { context =>
-      new TreeAlgorithm(context, id).setup(isInitiator)
+      new TreeAlgorithm(context, id).setup(null,isInitiator)
     }
 }
 
 
 class TreeAlgorithm(context: ActorContext[Nodes.Command], id: Int)  {
 
-  context.log.info(s"Node $id created for Tree Election Algorithm")
+  context.log.info(s"Tree Election Algorithm actor id: $id created")
 
   import Nodes._
   import TreeAlgorithm._
 
-  private def setup(isInitiator: Boolean): Behavior[Command] = {
+  private def setup(neighbors: List[ActorRef[Nodes.Command]], isInitiator: Boolean): Behavior[Command] = {
     Behaviors.receiveMessage {
       case SetNeighbors(neighborsRef) =>
         context.log.info(s"Node $id: Setting neighbors as $neighborsRef")
+        setup(neighborsRef, isInitiator)
+
+      case StartWakeUp =>
         context.log.info(s"Node $id: Entering the wake up phase")
         if (isInitiator) {
-          neighborsRef.foreach(_ ! WakeUpMessage)
-          wakeUp(neighborsRef, 0)
+          neighbors.foreach(_ ! WakeUpMessage)
+          wakeUp(neighbors, 0, mutable.Set[(Int, ActorRef[Nodes.Command])]())
         }
         else {
-          wakeUp(neighborsRef, 0)
+          wakeUp(neighbors, 0, mutable.Set[(Int, ActorRef[Nodes.Command])]())
         }
     }
   }
 
   private def wakeUp(
                       neighbors: List[ActorRef[Nodes.Command]],
-                      storedWakeUps: Int) : Behavior[Command] = {
+                      storedWakeUps: Int,
+                      storedWaves: mutable.Set[(Int, ActorRef[Nodes.Command])]) : Behavior[Command] = {
 
     Behaviors.receiveMessage{
       case WakeUpMessage =>
@@ -54,23 +75,23 @@ class TreeAlgorithm(context: ActorContext[Nodes.Command], id: Int)  {
           Behaviors.same
         } else {
           neighbors.foreach(_ ! WakeUpMessage)
-          wakeUp(neighbors, count)
+          wakeUp(neighbors, count, storedWaves)
         }
 
       case StartAlgorithm =>
         if (neighbors.size == 1) {
           context.log.info(s"Node $id: Leaf node sending wave messages to neighbor")
-          context.scheduleOnce(3.seconds, neighbors.head, Wave(id, context.self))
-          //neighbors.head ! Wave(id, context.self)
-          active(neighbors, neighbors.head, mutable.Set[(Int, ActorRef[Nodes.Command])](), id)
+          neighbors.head ! Wave(id, context.self)
+          active(neighbors, neighbors.head, storedWaves, id)
         }
         else {
-          active(neighbors, null, mutable.Set[(Int, ActorRef[Nodes.Command])](), -1)
+          active(neighbors, null, storedWaves, -1)
         }
 
-      case _ =>
-        context.log.info(s"Node $id: Received an unknown message")
-        Behaviors.unhandled
+      case Wave(q, replyTo) =>
+        context.log.info(s"Node $id: Received a Wave in WakeUp phase, storing it for further processing in Active state")
+        storedWaves += (q -> replyTo)
+        wakeUp(neighbors, storedWakeUps, storedWaves)
     }
   }
 
@@ -102,13 +123,13 @@ class TreeAlgorithm(context: ActorContext[Nodes.Command], id: Int)  {
         }
 
       case InformationMessage(maxId) =>
-        context.log.info(s"Node $id: Received Information message with largest ID: $maxId")
+        context.log.info(s"Node $id: Received information message with leader ID: $maxId")
         neighbors.filterNot(_ == parent).foreach(_ ! InformationMessage(id))
         Behaviors.same
 
       case _ =>
         context.log.info(s"Node $id: Received an unknown message")
-        Behaviors.unhandled
+        Behaviors.same
     }
   }
 }
