@@ -42,6 +42,7 @@ class DKRAlgorithm(context: ActorContext[Nodes.Command], id: Int)  {
                     storedTokensN0: mutable.Set[(Int, Int)],
                     storedTokensN1: mutable.Set[(Int, Int)]): Behavior[Command] = {
     Behaviors.receiveMessage {
+
       case SetSuccessor(successorRef) =>
         context.log.info(s"Node $id: Setting successor to node with ActorRef: ${successorRef.path.name}")
         setup(successorRef, storedTokensN0, storedTokensN1)

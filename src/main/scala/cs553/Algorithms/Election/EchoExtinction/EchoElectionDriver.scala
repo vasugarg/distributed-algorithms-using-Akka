@@ -2,13 +2,19 @@ package cs553.Algorithms.Election.EchoExtinction
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import com.typesafe.config.{Config, ConfigFactory}
+import cs553.Algorithms.Election.DolevKlaweRodeh.DKRDriver
+import cs553.Algorithms.Election.DolevKlaweRodeh.DKRDriver.config
 import cs553.Nodes.{Command, SetNeighbors, StartAlgorithm}
-import cs553.Utils.FileParser
+import cs553.Utils.{CreateLogger, FileParser}
+import org.slf4j.Logger
 
 object EchoElectionDriver {
+  val config: Config = ConfigFactory.load("application.conf")
+  val logger: Logger = CreateLogger(classOf[EchoElectionDriver.type])
   def main(args: Array[String]): Unit = {
-    val nodeMappings = FileParser.parseDotFile("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/UndirectedGraphs/3.dot")
-    println(s"$nodeMappings")
+    val nodeMappings = FileParser.parseDotFile(config.getString("ElectionAlgorithms.inputFile.EchoExtinction"))
+    logger.info(s"$nodeMappings")
 
     runEchoAlgorithm(nodeMappings)
   }

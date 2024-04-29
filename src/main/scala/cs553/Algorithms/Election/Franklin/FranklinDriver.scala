@@ -2,13 +2,20 @@ package cs553.Algorithms.Election.Franklin
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import com.typesafe.config.{Config, ConfigFactory}
+import cs553.Algorithms.Election.EchoExtinction.EchoElectionDriver
+import cs553.Algorithms.Election.EchoExtinction.EchoElectionDriver.config
 import cs553.Nodes.{Command, SetLeftNeighbor, SetRightNeighbor}
-import cs553.Utils.FileParser
+import cs553.Utils.{CreateLogger, FileParser}
+import org.slf4j.Logger
 
 object FranklinDriver {
+
+  val config: Config = ConfigFactory.load("application.conf")
+  val logger: Logger = CreateLogger(classOf[FranklinDriver.type])
   def main(args: Array[String]): Unit = {
-    val nodeMappings = FileParser.parseDotFileWithOrientation("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/UndirectedRings/50.dot")
-    println(s"$nodeMappings")
+    val nodeMappings = FileParser.parseDotFileWithOrientation(config.getString("ElectionAlgorithms.inputFile.FranklinAlgorithm"))
+    logger.info(s"$nodeMappings")
 
     runFranklinAlgorithm(nodeMappings)
   }

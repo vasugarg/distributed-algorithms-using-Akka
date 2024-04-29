@@ -2,15 +2,20 @@ package cs553.Algorithms.Election.TreeElection
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import com.typesafe.config.{Config, ConfigFactory}
 import cs553.Nodes._
-import cs553.Utils.FileParser
+import cs553.Utils.{CreateLogger, FileParser}
+import org.slf4j.Logger
 
 import scala.concurrent.duration._
 
 object TreeElectionDriver {
+
+  val config: Config = ConfigFactory.load("application.conf")
+  val logger: Logger = CreateLogger(classOf[TreeElectionDriver.type])
   def main(args: Array[String]): Unit = {
-    val nodeMappings = FileParser.parseDotFile("/Users/vasugarg/Documents/Github/CS553/DistributedAlgorithms/DistributedAlgorithms/inputs/UndirectedGraphs/20.dot")
-    println(s"$nodeMappings")
+    val nodeMappings = FileParser.parseDotFile(config.getString("ElectionAlgorithms.inputFile.TreeAlgorithm"))
+    logger.info(s"$nodeMappings")
 
     runTreeElection(nodeMappings)
   }
