@@ -94,3 +94,9 @@ Click the above hyperlink for detailed documentation of the algorithm.
   - `TreeAlgorithmTest.scala`
   - `CRAlgorithmTest.scala`
 
+## Metrics and Visualisation
+In order to monitor Actor's behavior and activity, we leveraged lightbend telemetry to configure Prometheus and Grafana with the project (Refs: [Akka: monitor your applications with Lightbend Telemetry, Prometheus and Grafana Dashboard](https://medium.com/akka-scala/akka-monitor-your-applications-with-lightbend-telemetry-prometheus-and-grafana-dashboard-1b7353e281c1)).
+
+![Akka_Dashboard](./images/Akka_Actors_Dashboard_1.png)
+
+![Akka_Dashboard](./images/Akka_Actors_Dashboard_2.png)
